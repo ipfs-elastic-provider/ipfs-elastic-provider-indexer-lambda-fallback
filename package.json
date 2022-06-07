@@ -1,0 +1,41 @@
+{
+  "name": "ipfs-elastic-provider-indexer-lambda-fallback",
+  "version": "0.1.0",
+  "description": "IPFS Elastic Provider indexer lambda fallback",
+  "author": "Simone Sanfratello <simone.sanfratello@nearform.com>",
+  "license": "(Apache-2.0 AND MIT)",
+  "private": true,
+  "scripts": {
+    "format": "prettier -w src",
+    "lint": "eslint src test",
+    "test": "c8 --reporter=text --reporter=html tap --rcfile=test/utils/config.yml",
+    "deploy": "aws lambda update-function-code --cli-connect-timeout 15000 --region $AWS_REGION --function-name $LAMBDA --image $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$AWS_ECR_REPOSITORY:$DOCKER_IMAGE_VERSION",
+    "test:ci": "npm run lint && c8 --reporter=text --reporter=json --check-coverage --branches 90 --functions 90 --lines 90 --statements 90 tap --rcfile=test/utils/config.yml",
+    "invoke": "aws lambda invoke --cli-binary-format raw-in-base64-out --region $AWS_REGION --function-name $LAMBDA --payload file://event.json --log-type Tail /dev/null | jq -r .LogResult | base64 -d"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.105.0",
+    "@aws-sdk/client-dynamodb": "^3.105.0",
+    "@aws-sdk/client-sqs": "^3.105.0",
+    "@aws-sdk/node-http-handler": "^3.94.0",
+    "@aws-sdk/util-dynamodb": "^3.105.0",
+    "dotenv": "^16.0.1",
+    "pino": "^8.0.0"
+  },
+  "devDependencies": {
+    "aws-sdk-client-mock": "^0.6.2",
+    "c8": "^7.11.3",
+    "eslint": "^8.17.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "pino-pretty": "^8.0.0",
+    "prettier": "^2.6.2",
+    "sinon": "^14.0.0",
+    "tap": "^16.2.0"
+  },
+  "engines": {
+    "node": ">=16.15.1"
+  }
+}
