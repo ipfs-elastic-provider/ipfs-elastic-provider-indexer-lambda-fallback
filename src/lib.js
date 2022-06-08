@@ -10,7 +10,7 @@ const CLOUDWATCH_QUERY = `fields @message
 | limit 10000` // max is 10k
 
 async function retrieveLogs({ start, end, group, ping, client, logger }) {
-  logger.info({ start: start.toISOStrgin(), end: end.toISOStrgin(), group }, 'CloudWatch retrieving logs')
+  logger.info({ start: start.toISOString(), end: end.toISOString(), group }, 'CloudWatch retrieving logs')
 
   const query = await client.startQuery({
     startTime: Math.floor(start.getTime() / 1_000),
@@ -38,7 +38,11 @@ async function retrieveLogs({ start, end, group, ping, client, logger }) {
 function analizeLogs(logs) {
   const cars = new Set()
   for (const log of logs) {
-    cars.add(log.car)
+    try {
+      const car = JSON.parse(log[0].value).car
+      car && cars.add(car)
+    } catch (err) {
+    }
   }
   return [...cars]
 }
@@ -49,7 +53,7 @@ async function removeFromTable({ car, table, key, client, logger }) {
   await client.send(
     new DeleteItemCommand({
       TableName: table,
-      Key: marshall({ [key]: car })
+      Key: marshall({ [key]: car }, { removeUndefinedValues: true })
     })
   )
 }
