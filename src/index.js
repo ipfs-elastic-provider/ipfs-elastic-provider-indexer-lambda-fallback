@@ -34,9 +34,11 @@ async function main(event) {
     logger
   })
   const cars = analizeLogs(logs)
-  for (const car of cars) {
+
+  for (let i = 0; i < cars.length; i++) {
+    const car = cars[i]
     try {
-      logger.info({ car }, 'Fixing car ...')
+      logger.info({ car }, `Fixing car ${i + 1} / ${cars.length}`)
       await removeFromTable({
         car,
         table: DYNAMO_CAR_TABLE,

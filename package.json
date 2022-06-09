@@ -6,7 +6,7 @@
   "license": "(Apache-2.0 AND MIT)",
   "private": true,
   "scripts": {
-    "format": "prettier -w src",
+    "format": "npm run lint -- --fix",
     "lint": "eslint src test",
     "test": "c8 --reporter=text --reporter=html tap --rcfile=test/utils/config.yml",
     "deploy": "aws lambda update-function-code --cli-connect-timeout 15000 --region $AWS_REGION --function-name $LAMBDA --image $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$AWS_ECR_REPOSITORY:$DOCKER_IMAGE_VERSION",

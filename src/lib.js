@@ -1,5 +1,6 @@
 'use strict'
 
+const URL = require('url')
 const sleep = require('util').promisify(setTimeout)
 const { DeleteItemCommand } = require('@aws-sdk/client-dynamodb')
 const { marshall } = require('@aws-sdk/util-dynamodb')
@@ -9,25 +10,25 @@ const CLOUDWATCH_QUERY = `fields @message
 | filter @message like /"level":50/
 | limit 10000` // max is 10k
 
-async function retrieveLogs({ start, end, group, ping, client, logger }) {
+async function retrieveLogs({ start, end, group, ping, query = CLOUDWATCH_QUERY, client, logger }) {
   logger.info({ start: start.toISOString(), end: end.toISOString(), group }, 'CloudWatch retrieving logs')
 
-  const query = await client.startQuery({
+  const q = await client.startQuery({
     startTime: Math.floor(start.getTime() / 1_000),
     endTime: Math.floor(end.getTime() / 1_000),
     logGroupName: group,
-    queryString: CLOUDWATCH_QUERY
+    queryString: query
   })
 
   let status, result
   do {
     await sleep(ping)
-    result = await client.getQueryResults({ queryId: query.queryId })
+    result = await client.getQueryResults({ queryId: q.queryId })
     status = result.status
   } while (status === 'Running' || status === 'Scheduled')
 
   if (status !== 'Complete') {
-    throw new Error(`CloudWatch Query ${query.queryId} failed with status ${status}`)
+    throw new Error(`CloudWatch Query ${q.queryId} failed with status ${status}`)
   }
 
   logger.info(`CloudWatch got ${result.results.length} log entries`)
@@ -40,9 +41,11 @@ function analizeLogs(logs) {
   for (const log of logs) {
     try {
       const car = JSON.parse(log[0].value).car
-      car && cars.add(car)
-    } catch (err) {
-    }
+      if (!car) { continue }
+      // TODO validate car
+      // new URL(`s3://${car}`)
+      cars.add(car)
+    } catch (err) {}
   }
   return [...cars]
 }
@@ -63,7 +66,7 @@ async function pushToQueue({ car, queue, client, logger }) {
 
   await client.send(
     new SendMessageCommand({
-      MessageBody: JSON.stringify({ Records: [{ body: car }] }),
+      MessageBody: car,
       QueueUrl: queue
     })
   )

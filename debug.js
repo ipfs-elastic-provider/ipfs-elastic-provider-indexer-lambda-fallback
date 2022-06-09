@@ -16,6 +16,6 @@ const credentials = {
 const lambda = require('./src/index').handler
 lambda({
   credentials,
-  start: "2022-06-07T00:00:00.000Z",
-  end: "2022-06-08T00:00:00.000Z"
+  start: "2022-06-08T00:00:00.000Z",
+  end: "2022-06-09T00:00:00.000Z"
 })
