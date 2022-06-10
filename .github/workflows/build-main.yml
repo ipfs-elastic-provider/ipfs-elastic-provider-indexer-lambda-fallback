@@ -1,0 +1,33 @@
+---
+name: Build And Deploy
+on:
+  push:
+    branches: [main, workflows]
+  workflow_dispatch:
+env:
+  REGISTRY: ghcr.io
+jobs: 
+  build-prod:
+    permissions:
+      packages: write
+      id-token: write
+    uses: ipfs-elastic-provider/shared-workflows/.github/workflows/lambda-shared-build.yaml@main
+    secrets:
+      aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+      aws_role_id: ${{ secrets.AWS_ROLE_ID }}
+      aws_region: ${{ secrets.AWS_REGION }}
+      aws_ecr_repository: ${{ secrets.AWS_ECR_REPOSITORY }}
+  deploy-to-prod:
+    uses: ipfs-elastic-provider/shared-workflows/.github/workflows/lambda-shared-deploy.yaml@main
+    permissions:
+      id-token: write
+    needs: build-prod
+    with:
+      deploy_to_environment: prod
+      lambda: indexer-fallback
+      docker_image_version: ${{ needs.build-prod.outputs.build_date }}
+    secrets:
+      aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+      aws_role_id: ${{ secrets.AWS_ROLE_ID }}
+      aws_region: ${{ secrets.AWS_REGION }}
+      aws_ecr_repository: ${{ secrets.AWS_ECR_REPOSITORY }}
